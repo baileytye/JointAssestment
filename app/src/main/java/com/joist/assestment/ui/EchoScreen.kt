@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.joist.assestment.R
+import com.joist.assestment.data.TextAnalysis
 import com.joist.assestment.ui.theme.EchoAppTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -41,9 +42,11 @@ fun EchoScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val inputText by viewModel.inputText.collectAsState()
+    val analysis by viewModel.analysis.collectAsState()
     EchoScreenContent(
         uiState = uiState,
         inputText = inputText,
+        analysis = analysis,
         onTextChanged = viewModel::onTextChanged,
         onSubmit = viewModel::submit
     )
@@ -53,6 +56,7 @@ fun EchoScreen(
 internal fun EchoScreenContent(
     uiState: EchoUiState,
     inputText: String,
+    analysis: TextAnalysis? = null,
     onTextChanged: (String) -> Unit,
     onSubmit: () -> Unit
 ) {
@@ -141,6 +145,15 @@ internal fun EchoScreenContent(
                 val successText = (uiState as? EchoUiState.Success)?.text ?: ""
                 OutputCard(text = successText)
             }
+
+            if (analysis != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${analysis.charCount} chars · ${analysis.wordCount} words · ${analysis.label}",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag("analysis_text")
+                )
+            }
         }
     }
 }
@@ -178,6 +191,7 @@ private fun EchoScreenPreviewSuccess() {
         EchoScreenContent(
             uiState = EchoUiState.Success("Hello World"),
             inputText = "Hello World",
+            analysis = TextAnalysis(charCount = 11, wordCount = 2, label = "Valid"),
             onTextChanged = {},
             onSubmit = {}
         )

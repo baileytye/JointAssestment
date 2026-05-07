@@ -2,7 +2,10 @@ package com.joist.assestment.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.joist.assestment.data.TextAnalysis
+import com.joist.assestment.data.TextAnalysisRepository
 import com.joist.assestment.data.ValidationRepository
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +19,8 @@ sealed interface EchoUiState {
 }
 
 class EchoViewModel(
-    private val repository: ValidationRepository
+    private val repository: ValidationRepository,
+    private val analysisRepository: TextAnalysisRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EchoUiState>(EchoUiState.Idle)
@@ -24,6 +28,9 @@ class EchoViewModel(
 
     private val _inputText = MutableStateFlow("")
     val inputText: StateFlow<String> = _inputText.asStateFlow()
+
+    private val _analysis = MutableStateFlow<TextAnalysis?>(null)
+    val analysis: StateFlow<TextAnalysis?> = _analysis.asStateFlow()
 
     fun onTextChanged(text: String) {
         _inputText.value = text
@@ -38,12 +45,21 @@ class EchoViewModel(
             _uiState.value = EchoUiState.Error("Input cannot be empty")
             return
         }
-
         viewModelScope.launch {
             _uiState.value = EchoUiState.Loading
             repository.validate(text)
-                .onSuccess { _uiState.value = EchoUiState.Success(it) }
+                .onSuccess {
+                    _uiState.value = EchoUiState.Success(it)
+                    runAnalysis()
+                }
                 .onFailure { _uiState.value = EchoUiState.Error(it.message ?: "Validation failed") }
+        }
+    }
+
+    private fun runAnalysis() {
+        GlobalScope.launch {
+            val text = (_uiState.value as EchoUiState.Success).text!!
+            _analysis.value = analysisRepository.analyze(text)
         }
     }
 }
