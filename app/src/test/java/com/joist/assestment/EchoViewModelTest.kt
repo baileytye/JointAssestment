@@ -1,6 +1,7 @@
 package com.joist.assestment
 
 import app.cash.turbine.test
+import com.joist.assestment.data.TextAnalysisRepository
 import com.joist.assestment.data.ValidationRepository
 import com.joist.assestment.ui.EchoUiState
 import com.joist.assestment.ui.EchoViewModel
@@ -24,12 +25,13 @@ class EchoViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val repository: ValidationRepository = mockk()
+    private val analysisRepository: TextAnalysisRepository = mockk(relaxed = true)
     private lateinit var viewModel: EchoViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = EchoViewModel(repository)
+        viewModel = EchoViewModel(repository, analysisRepository)
     }
 
     @After
